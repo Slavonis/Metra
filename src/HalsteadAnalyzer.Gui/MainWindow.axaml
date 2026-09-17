@@ -1,0 +1,134 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        x:Class="HalsteadAnalyzer.Gui.MainWindow"
+        Width="1180" Height="760"
+        MinWidth="900" MinHeight="600"
+        Title="Метрики Холстеда — анализатор кода JavaScript">
+
+  <Grid RowDefinitions="Auto,*" Margin="12">
+
+    <!-- Панель инструментов -->
+    <Border Grid.Row="0" Background="#F2F4F8" CornerRadius="8" Padding="10" Margin="0,0,0,10">
+      <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+        <Button x:Name="OpenButton" Content="Открыть .js файл…" Padding="12,6" />
+        <Button x:Name="AnalyzeButton" Content="Анализировать" Padding="12,6"
+                Background="#2D6CDF" Foreground="White" FontWeight="SemiBold" />
+        <Button x:Name="SampleButton" Content="Загрузить пример" Padding="12,6" />
+        <Button x:Name="ClearButton" Content="Очистить" Padding="12,6" />
+        <TextBlock x:Name="FileLabel" Text="Файл не выбран" VerticalAlignment="Center"
+                   Margin="10,0,0,0" Foreground="#5B6472" />
+      </StackPanel>
+    </Border>
+
+    <!-- Основная область: слева исходный код, справа результаты -->
+    <Grid Grid.Row="1" ColumnDefinitions="2*,Auto,3*">
+
+      <!-- Исходный код -->
+      <Grid Grid.Column="0" RowDefinitions="Auto,*">
+        <TextBlock Grid.Row="0" Text="Исходный код JavaScript"
+                   FontWeight="SemiBold" Margin="2,0,0,6" />
+        <Border Grid.Row="1" BorderBrush="#D3D8E0" BorderThickness="1" CornerRadius="6">
+          <TextBox x:Name="SourceBox"
+                   AcceptsReturn="True" AcceptsTab="True"
+                   TextWrapping="NoWrap"
+                   FontFamily="Cascadia Code,Consolas,Menlo,monospace"
+                   FontSize="13"
+                   VerticalAlignment="Stretch"
+                   Watermark="Вставьте сюда код JavaScript или откройте файл…"
+                   ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                   ScrollViewer.VerticalScrollBarVisibility="Auto" />
+        </Border>
+      </Grid>
+
+      <GridSplitter Grid.Column="1" Width="6" Background="Transparent"
+                    ResizeDirection="Columns" />
+
+      <!-- Результаты -->
+      <Grid Grid.Column="2" RowDefinitions="Auto,*,Auto,Auto">
+
+        <TextBlock Grid.Row="0"
+                   Text="Таблица метрик Холстеда (6 базовых метрик)"
+                   FontWeight="SemiBold" Margin="2,0,0,6" />
+
+        <!-- Две частотные таблицы: операторы и операнды -->
+        <Grid Grid.Row="1" ColumnDefinitions="*,*">
+
+          <Grid Grid.Column="0" RowDefinitions="*,Auto" Margin="0,0,6,0">
+            <DataGrid x:Name="OperatorsGrid"
+                      IsReadOnly="True"
+                      GridLinesVisibility="All"
+                      HeadersVisibility="Column"
+                      BorderBrush="#D3D8E0" BorderThickness="1"
+                      CanUserResizeColumns="True"
+                      AutoGenerateColumns="False">
+              <DataGrid.Columns>
+                <DataGridTextColumn Header="j" Binding="{Binding Index}" Width="44" />
+                <DataGridTextColumn Header="Оператор" Binding="{Binding Symbol}" Width="*" />
+                <DataGridTextColumn Header="f1j" Binding="{Binding Frequency}" Width="60" />
+              </DataGrid.Columns>
+            </DataGrid>
+            <Border Grid.Row="1" Background="#EAF0FB" Padding="8,6" CornerRadius="0,0,4,4">
+              <TextBlock x:Name="OperatorTotals"
+                         Text="η1 = 0     N1 = 0" FontWeight="SemiBold" />
+            </Border>
+          </Grid>
+
+          <Grid Grid.Column="1" RowDefinitions="*,Auto" Margin="6,0,0,0">
+            <DataGrid x:Name="OperandsGrid"
+                      IsReadOnly="True"
+                      GridLinesVisibility="All"
+                      HeadersVisibility="Column"
+                      BorderBrush="#D3D8E0" BorderThickness="1"
+                      CanUserResizeColumns="True"
+                      AutoGenerateColumns="False">
+              <DataGrid.Columns>
+                <DataGridTextColumn Header="i" Binding="{Binding Index}" Width="44" />
+                <DataGridTextColumn Header="Операнд" Binding="{Binding Symbol}" Width="*" />
+                <DataGridTextColumn Header="f2i" Binding="{Binding Frequency}" Width="60" />
+              </DataGrid.Columns>
+            </DataGrid>
+            <Border Grid.Row="1" Background="#EAF0FB" Padding="8,6" CornerRadius="0,0,4,4">
+              <TextBlock x:Name="OperandTotals"
+                         Text="η2 = 0     N2 = 0" FontWeight="SemiBold" />
+            </Border>
+          </Grid>
+        </Grid>
+
+        <!-- Пояснение к базовым метрикам -->
+        <TextBlock Grid.Row="2" Margin="2,10,0,4" TextWrapping="Wrap" Foreground="#5B6472"
+                   Text="6 базовых метрик: η1, η2, N1, N2, а также f1j и f2i — столбцы частот вхождений в таблицах выше." />
+
+        <!-- 3 расширенные метрики -->
+        <Border Grid.Row="3" Background="#F2F4F8" CornerRadius="8" Padding="12" Margin="0,6,0,0">
+          <StackPanel Spacing="8">
+            <TextBlock Text="3 расширенные (производные) метрики"
+                       FontWeight="SemiBold" />
+            <StackPanel Orientation="Horizontal" Spacing="10">
+              <Border Background="White" CornerRadius="6" Padding="14,10" BorderBrush="#D3D8E0" BorderThickness="1">
+                <StackPanel>
+                  <TextBlock Text="η = η1 + η2  (словарь программы)" Foreground="#5B6472" FontSize="12" />
+                  <TextBlock x:Name="EtaValue" Text="0" FontSize="22" FontWeight="Bold" />
+                </StackPanel>
+              </Border>
+              <Border Background="White" CornerRadius="6" Padding="14,10" BorderBrush="#D3D8E0" BorderThickness="1">
+                <StackPanel>
+                  <TextBlock Text="N = N1 + N2  (длина программы)" Foreground="#5B6472" FontSize="12" />
+                  <TextBlock x:Name="LengthValue" Text="0" FontSize="22" FontWeight="Bold" />
+                </StackPanel>
+              </Border>
+              <Border Background="White" CornerRadius="6" Padding="14,10" BorderBrush="#D3D8E0" BorderThickness="1">
+                <StackPanel>
+                  <TextBlock Text="V = N·log₂η  (объём программы)" Foreground="#5B6472" FontSize="12" />
+                  <TextBlock x:Name="VolumeValue" Text="0" FontSize="22" FontWeight="Bold" />
+                </StackPanel>
+              </Border>
+            </StackPanel>
+          </StackPanel>
+        </Border>
+      </Grid>
+    </Grid>
+  </Grid>
+</Window>
