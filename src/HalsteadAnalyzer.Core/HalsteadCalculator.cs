@@ -19,6 +19,10 @@ public static class HalsteadCalculator
     private static readonly HashSet<string> ValueIdentifiers = new(StringComparer.Ordinal)
     { "undefined", "NaN", "Infinity" };
 
+    // Ключевые слова управляющих конструкций, чей синтаксис включает скобки ()
+    private static readonly HashSet<string> ControlKeywords = new(StringComparer.Ordinal)
+    { "if", "for", "while", "switch", "catch", "with" };
+
     public static HalsteadResult Analyze(string source)
     {
         var tokens = new JsTokenizer(source).Tokenize();
@@ -63,9 +67,7 @@ public static class HalsteadCalculator
 
                     if (followedByCall)
                     {
-                        // ИСПРАВЛЕНИЕ: ИМЯ вызываемой ИЛИ объявляемой функции учтется при обработке «(»
-                        // Само имя здесь в операнды мы не добавляем ни в каком из этих случаев,
-                        // чтобы не было лишних операндов при объявлении функции.
+                        // Имя вызываемой или объявляемой функции учитывается при обработке «(»
                     }
                     else
                     {
@@ -101,12 +103,10 @@ public static class HalsteadCalculator
 
                 if (prevIsName || prevIsResult)
                 {
-                    // ИСПРАВЛЕНИЕ: Это вызов ИЛИ объявление функции.
-                    // Отдельный оператор "( )" НЕ добавляется. Скобки становятся частью "name()".
+                    // Вызов или объявление функции
                     string calleeName = prevIsName ? prev!.Text : "<expr>";
                     addOp(calleeName + "()");
 
-                    // В операнды добавляем ТОЛЬКО если это вызов ВНУТРИ выражения (и это не объявление функции)
                     bool isDecl = prevIsName && IsPrecededByFunction(toks, IndexOfPrev(toks, i));
                     if (!isDecl && IsCallPartOfExpression(toks, i, matchClose, matchOpen))
                     {
@@ -115,8 +115,16 @@ public static class HalsteadCalculator
                 }
                 else
                 {
-                    // Обычные группирующие скобки или скобки конструкций (if, for, и т.д.)
-                    addOp("( )");
+                    // Проверяем, не являются ли скобки частью управляющей конструкции (if, for, while и т.д.)
+                    bool isControlStructure = prev != null && 
+                                              prev.Kind == TokenKind.Keyword && 
+                                              ControlKeywords.Contains(prev.Text);
+
+                    if (!isControlStructure)
+                    {
+                        // Учитываем скобки как оператор ( ) только в подвыражениях / группировках
+                        addOp("( )");
+                    }
                 }
                 break;
             }
